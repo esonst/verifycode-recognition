@@ -109,7 +109,7 @@ while(True):
             for i in m:
                 print("\n\t")
                 print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
-        sys.stdout.write("runing: %s"%(hashes + spaces))
+        sys.stdout.write("\rruning: %s"%(hashes + spaces))
         sys.stdout.flush()
         time.sleep(3)
         if(len(alist)>0):
