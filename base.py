@@ -18,22 +18,18 @@ def get_cookies_pic(url):
         f.write(cook.content)
     return jar
 
-def login_post(flag,url,jar):
-    if flag:
-        try:
-            with open("pass.txt","r") as f:
-                info=f.read()
-            if(info==''):
-                print("没有找到备份")
-                raise Exception('无保存密码')
-            stuid=info[:10]
-            password=info[10:]
-            print("stuid="+stuid)
-        except:
-            stuid=input("student_id=")
-            password=input("password=")
-    else:
-        stuid=input("id=")
+def login_post(url,jar):
+    try:
+        with open("pass.txt","r") as f:
+            info=f.read()
+        if(info==''):
+            print("没有找到备份")
+            raise Exception('无保存密码')
+        stuid=info[:10]
+        password=info[10:]
+        print("stuid="+stuid)
+    except:
+        stuid=input("student_id=")
         password=input("password=")
     checkcode=recogniztion(model,"logcode.gif")
     data={"__VIEWSTATE":"/wEPDwUENTM4MWQYAQUeX19Db250cm9sc1JlcXVpcmVQb3N0QmFja0tleV9fFgEFEl9jdGwwOkltYWdlQnV0dG9uMQ0NODyO1wx8Du/Dppbl8bfJw0UTfwwIEHKsvYbP9Nqt",
@@ -57,9 +53,8 @@ def get_signcode(signurl,jar):
     cook=requests.get(signurl,cookies=jar)
     with open('signcode.gif', 'wb') as f:
         f.write(cook.content)
-def signclass(signurl,stuid,jar):
+def signclass(signurl,stuid,jar,n):
     get_signcode(signurl,jar)
-    n=int(input("要抢课的序号:"))
     signcode=recogniztion(model,"signcode.gif")
     data={"__EVENTTARGET":"dgData00$_ctl"+str(n+2)+"$Linkbutton3",
          "__EVENTARGUMENT":"",
@@ -72,14 +67,15 @@ def signclass(signurl,stuid,jar):
     except:
         print("连接超时")
     print(re.findall("alert.*\)",req.text)[0])
-    return signcode
+    return
 
 def printf(alist):
-    n=0
+    n=[]
+    m=[]
     for i in range(len(alist)):
         if(int(alist[i][7])<int(alist[i][6])):
-            print("\n"+str(i)+":  ")
-            print(alist[i])
-            n=n+1
-    m=len(alist)-n
+            n.append(alist[i])
+            n[-1].append(i)
+        else:
+            m.append(alist[i])
     return n,m

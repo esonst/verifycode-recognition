@@ -19,7 +19,6 @@ import shutil
 
 
 print("robots V2.0\n")
-print("验证码识别率：  30%")
 
 # In[3]:
 
@@ -29,30 +28,17 @@ checkurl=r"http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/Identifying
 signurl="http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/IdentifyingCode.aspx"
 
 
-# In[4]:
-
-
-def save(filename,checkcode):
-    try:
-        shutil.move(filename,".\\dataset\\"+checkcode+".gif")
-    except:
-        print("请在本目录创建一个名为'dataset'的文件夹")
-        raise
-
-
 # In[5]:
 
 
 def login(checkurl,url):
-    flag=input("自动登陆？ (是/否) y/n: ")=='y'
     while(True):
         jar=get_cookies_pic(checkurl)
-        req,stuid,password,checkcode=login_post(flag,url,jar)
+        req,stuid,password,checkcode=login_post(url,jar)
         if req.url=='http://202.4.152.190:8080/pyxx/Default.aspx':
             with open("pass.txt","w") as f:
                 f.write(stuid+password)
             print("Log in Successful!")
-            save("logcode.gif",checkcode)
             return stuid,jar
         else:
             print(re.findall("alert.*\)",req.text)[0])
@@ -95,24 +81,42 @@ def choose(n,signurl,stuid,jar):
 
 # In[11]:
 
-n=0
-m=0
+n,m=printf(alist)
+print("未满报告：\n")
+for i in n:
+    print("\n\t")
+    print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+print("已满报告: ")
+for i in m:
+    print("\n\t")
+    print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+
 while(True):
+    n_p=n
+    m_p=m
     bar_length=3
 
     for percent in range(0, 3):
         hashes = '#' * int(percent/3.0 * bar_length)
         spaces = ' ' * (bar_length - len(hashes))
-
-        sys.stdout.write("\r当前可选课数："+str(n)+"总报告数: "+str(m)+"\truning: %s"%(hashes + spaces))
+        if n_p!=n:
+            print("未满报告：\n")
+            for i in n:
+                print("\n\t")
+                print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+        if m_p!=m:
+            print("已满报告: ")
+            for i in m:
+                print("\n\t")
+                print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+        sys.stdout.write("runing: %s"%(hashes + spaces))
         sys.stdout.flush()
         time.sleep(3)
         if(len(alist)>0):
             n,m=printf(alist)
-            if(n>0):
-                ctypes.windll.user32.MessageBoxA(0,u"有报告了！".encode('gb2312'),u' 信息'.encode('gb2312'),0)
-                signcode=choose(len(alist),signurl,stuid,jar)
-                save("signcode.gif",signcode)
+            while(len(n)>0):
+                choose(len(alist),signurl,stuid,jar,n[0][-1])
+                n=n.pop(0)
 
 
 # In[29]:
