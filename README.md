@@ -3,7 +3,7 @@
     内容为学号+密码可以自动登录
     格式为
     """
-    2020XXXXXXXXPPPPPPPPP
+    20XXXXXXXXPPPPPPPPP
     #P为密码
     """
     运行 robot.py 即可，有啥问题再说
