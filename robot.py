@@ -72,11 +72,12 @@ alist=get_info(stuid,jar)
 # In[10]:
 
 
-def choose(n,signurl,stuid,jar):
-    while(True):
-        signclass(signurl,stuid,jar)
-        if not input("继续选课？:(是/否) y/n ")=='y':
-            return
+def choose(signurl,stuid,jar,n):
+    a=3
+    while(a>0):
+        signclass(signurl,stuid,jar,n)
+        a-=1
+
 
 
 # In[11]:
@@ -119,7 +120,7 @@ while(True):
             n,m=printf(alist)
             while(len(n)>0):
                 choose(len(alist),signurl,stuid,jar,n[0][-1])
-                n=n.pop(0)
+                n.pop(0)
 
 
 # In[29]:

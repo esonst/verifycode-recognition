@@ -78,4 +78,5 @@ def printf(alist):
             n[-1].append(i)
         else:
             m.append(alist[i])
+            m[-1].append(i)
     return n,m
