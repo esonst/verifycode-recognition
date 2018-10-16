@@ -91,27 +91,30 @@ for i in m:
     print("\n\t")
     print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
 
+m_p=len(m)
 while(True):
-    n_p=n
-    m_p=m
     bar_length=3
-
     for percent in range(0, 3):
         hashes = '#' * int(percent/3.0 * bar_length)
         spaces = ' ' * (bar_length - len(hashes))
-        if n_p!=n:
+
+
+        if m_p!=len(m):
+            print("\n\n\n\n\n\n")
             print("未满报告：\n")
             for i in n:
                 print("\n\t")
                 print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
-        if m_p!=m:
             print("已满报告: ")
             for i in m:
                 print("\n\t")
                 print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+
         sys.stdout.write("\rruning: %s"%(hashes + spaces))
         sys.stdout.flush()
         time.sleep(3)
+
+        m_p=len(m)
         if(len(alist)>0):
             n,m=printf(alist)
             while(len(n)>0):
