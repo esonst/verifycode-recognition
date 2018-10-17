@@ -114,7 +114,7 @@ while(True):
         sys.stdout.write("\rruning: %s"%(hashes + spaces))
         sys.stdout.flush()
         time.sleep(3)
-
+        alist=get_info(stuid,jar)
         m_p=len(m)
         if(len(alist)>0):
             n,m=printf(alist)
@@ -124,7 +124,3 @@ while(True):
 
 
 # In[29]:
-
-
-
-
