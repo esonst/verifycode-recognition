@@ -4,21 +4,15 @@ import requests
 from recognizition import *
 import matplotlib.image as mpimg
 model=load_models("My_paras.h5")
-def recogniztion(model,name):
-    image=mpimg.imread(name)[:,:,0:3]
-    return pre_process(model,image)
-def get_cookies_pic(url):
-    try:
-        cook=requests.get(url,timeout=5)
-    except:
-        print("连接超时")
-    jar=requests.cookies.RequestsCookieJar()
-    jar.set('ASP.NET_SessionId',cook.cookies['ASP.NET_SessionId'],domain='202.4.152.190')
-    with open('logcode.gif', 'wb') as f:
-        f.write(cook.content)
-    return jar
 
-def login_post(url,jar):
+url="http://202.4.152.190:8080/pyxx/login.aspx"
+checkurl=r"http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/IdentifyingCode.aspx"
+signurl=r"http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/IdentifyingCode.aspx"
+jar=requests.cookies.RequestsCookieJar()
+viewstate=''
+event=''
+
+def getusers():
     try:
         with open("pass.txt","r") as f:
             info=f.read()
@@ -31,9 +25,70 @@ def login_post(url,jar):
     except:
         stuid=input("student_id=")
         password=input("password=")
+    return stuid,password
+
+# 获取用户名和密码
+stuid,password=getusers()
+def login():
+    while(True):
+        jar=get_cookies_pic()
+        req=login_post(jar)
+        if req.url=='http://202.4.152.190:8080/pyxx/Default.aspx':
+            with open("pass.txt","w") as f:
+                f.write(stuid+password)
+            print("Log in Successful!")
+            return jar
+        else:
+            print(re.findall("alert.*\)",req.text)[0])
+
+def get_cookies_pic():
+    try:
+        cook=requests.get(checkurl,timeout=5)
+    except:
+        print("连接超时")
+    jar=requests.cookies.RequestsCookieJar()
+    jar.set('ASP.NET_SessionId',cook.cookies['ASP.NET_SessionId'],domain='202.4.152.190')
+    with open('logcode.gif', 'wb') as f:
+        f.write(cook.content)
+    return jar
+
+def get_info(jar):
+    """
+    output
+    alist:报告列表
+    viewsteta,event：重要参数
+    """
+    try:
+        ans=requests.get("http://202.4.152.190:8080/pyxx/txhdgl/hdlist.aspx?xh="+stuid,cookies=jar,timeout=5)
+    except:
+        print("获取列表出现错误连接超时")
+    soup=BeautifulSoup(ans.text,"html.parser")
+    viewstate=soup.find(id="__VIEWSTATE").attrs['value']
+    event=soup.find(id="__EVENTVALIDATION").attrs['value']
+    target=soup.findAll("table")[-1]
+    classnum=len(target.findAll("tr"))-1  # 报告数量
+    alist=[[]]*classnum
+    for n in range(classnum):
+        for info in target.findAll("tr")[n+1].findAll("td")[:11]:
+            alist[n]=alist[n]+[info.text]
+    return alist,viewstate,event
+
+def recogniztion(model,name):
+    image=mpimg.imread(name)[:,:,0:3]
+    return pre_process(model,image)
+
+
+def login_post(jar):
+    a=requests.get(url).text
+    s=BeautifulSoup(a,"html.parser")
+    
+    viewstate=s.find(id="__VIEWSTATE").attrs['value']
+    event=s.find(id="__EVENTVALIDATION").attrs['value']
+    
     checkcode=recogniztion(model,"logcode.gif")
-    data={"__VIEWSTATE":"/wEPDwUENTM4MWQYAQUeX19Db250cm9sc1JlcXVpcmVQb3N0QmFja0tleV9fFgEFEl9jdGwwOkltYWdlQnV0dG9uMQ0NODyO1wx8Du/Dppbl8bfJw0UTfwwIEHKsvYbP9Nqt",
-      "__EVENTVALIDATION":" /wEWBQKD7ogKAs351pYFAoWvzpoEAo/yj6QJAvejy/sN4orIb7P+pLUuRnP+SEJjmDK905Y49c5EptEPq4AmsvQ=",
+    
+    data={"__VIEWSTATE":viewstate,
+          "__EVENTVALIDATION":event,
       "_ctl0:txtusername":stuid,
       "_ctl0:txtpassword":password,
       "_ctl0:txtyzm":checkcode,
@@ -46,20 +101,23 @@ def login_post(url,jar):
     except:
         print("连接超时")
 
-    return req,stuid,password,checkcode
+    return req
 
 
-def get_signcode(signurl,jar):
+def get_signcode():
     cook=requests.get(signurl,cookies=jar)
     with open('signcode.gif', 'wb') as f:
         f.write(cook.content)
-def signclass(signurl,stuid,jar,n):
+
+def signclass(n):
+    n=n+2
+    
     get_signcode(signurl,jar)
     signcode=recogniztion(model,"signcode.gif")
-    data={"__EVENTTARGET":"dgData00$_ctl"+str(n+2)+"$Linkbutton3",
+    data={"__EVENTTARGET":"dgData00$_ctl"+str(n)+"$Linkbutton3",
          "__EVENTARGUMENT":"",
-         "__VIEWSTATE":"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",
-         "__EVENTVALIDATION":"/wEWEgLTm7h4Ari7+5ULAvbGx/QJArGP58MLArGP+54EApL76rYEAv+20uwCAv+2xjECgrf2swoCgrfi+AcCgLfaqgICgLe+7w8C/7a+iQoC/7bazgcC/bbC8AMC/bbWtQECgLemxwsCgLeyjAmSD6wCS8bOOGWilZlBpeeiW0RUr8vF8v3I98Q/CfsMfQ==",
+         "__VIEWSTATE":viewstate,
+         "__EVENTVALIDATION":event,
          "txtyzm":signcode}
     headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36"}
     try:
@@ -69,7 +127,7 @@ def signclass(signurl,stuid,jar,n):
     print(re.findall("alert.*\)",req.text)[0])
     return
 
-def printf(alist):
+def process(alist):
     n=[]
     m=[]
     for i in range(len(alist)):

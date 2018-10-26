@@ -14,113 +14,75 @@ import ctypes
 import sys
 import shutil
 
+"""
+base中的全局变量为
+    url                 登陆网址
+    checkurl            验证码网址
+    signurl             验证码网址
+    stuid               用户名
+    password            密码
+"""
 
-# In[2]:
+def printf(n,m):
+    print("未满报告：\n")
+    for i in n:
+        print("\n\t")
+        print(str(i[-1])+"\t"+i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+    print("已满报告: ")
+    for i in m:
+        print("\n\t")
+        print(str(i[-1])+"\t"+i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
 
-
-print("robots V2.0\n")
-
-# In[3]:
-
-
-url="http://202.4.152.190:8080/pyxx/login.aspx"
-checkurl=r"http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/IdentifyingCode.aspx"
-signurl="http://202.4.152.190:8080/pyxx/PageTemplate/NsoftPage/yzm/IdentifyingCode.aspx"
-
-
-# In[5]:
-
-
-def login(checkurl,url):
-    while(True):
-        jar=get_cookies_pic(checkurl)
-        req,stuid,password,checkcode=login_post(url,jar)
-        if req.url=='http://202.4.152.190:8080/pyxx/Default.aspx':
-            with open("pass.txt","w") as f:
-                f.write(stuid+password)
-            print("Log in Successful!")
-            return stuid,jar
-        else:
-            print(re.findall("alert.*\)",req.text)[0])
-
-
-# In[8]:
-
-
-stuid,jar=login(checkurl,url)
-
-
-# In[9]:
-
-
-def get_info(stuid,jar):
-    try:
-        ans=requests.get("http://202.4.152.190:8080/pyxx/txhdgl/hdlist.aspx?xh="+stuid,cookies=jar,timeout=5)
-    except:
-        print("连接超时")
-    soup=BeautifulSoup(ans.text,"html.parser")
-    target=soup.findAll("table")[-1]
-    classnum=len(target.findAll("tr"))-1  # 报告数量
-    alist=[[]]*classnum
-    for n in range(classnum):
-        for info in target.findAll("tr")[n+1].findAll("td")[:11]:
-            alist[n]=alist[n]+[info.text]
-    return alist
-alist=get_info(stuid,jar)
-
-
-# In[10]:
-
-
-def choose(signurl,stuid,jar,n):
-    a=3
+### 执行5次 强报告        
+def choose(n):
+    a=5
     while(a>0):
-        signclass(signurl,stuid,jar,n)
+        signclass(n)
         a-=1
 
+#登陆教务网，拿到cookies
+jar=login()
 
+#获取报告列表
+alist,viewstate,event=get_info(jar)
 
-# In[11]:
+#处理列表，找出未满报告
+n,m=process(alist)
 
-n,m=printf(alist)
-print("未满报告：\n")
-for i in n:
-    print("\n\t")
-    print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
-print("已满报告: ")
-for i in m:
-    print("\n\t")
-    print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+printf(n,m)
 
+#记录上个状态用于对比刷新
 m_p=len(m)
+
 while(True):
+	### 以下皆为命令行输出
     bar_length=3
     for percent in range(0, 3):
         hashes = '#' * int(percent/3.0 * bar_length)
         spaces = ' ' * (bar_length - len(hashes))
 
-
         if m_p!=len(m):
             print("\n\n\n\n\n\n")
-            print("未满报告：\n")
-            for i in n:
-                print("\n\t")
-                print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
-            print("已满报告: ")
-            for i in m:
-                print("\n\t")
-                print(i[1]+"\t"+i[6]+"\t"+i[7]+"\n")
+            printf(n,m)
 
         sys.stdout.write("\rruning: %s"%(hashes + spaces))
         sys.stdout.flush()
+
+
+
         time.sleep(3)
-        alist=get_info(stuid,jar)
+
+        ## 获取最新列表
+        alist,viewstate,event=get_info(jar)
+        ## 储存上一个状态
         m_p=len(m)
+
         if(len(alist)>0):
-            n,m=printf(alist)
+            n,m=process(alist)
+
             while(len(n)>0):
-                choose(len(alist),signurl,stuid,jar,n[0][-1])
+                print(str(n[0][-1])+"\t"+n[0][1]+"\t"+n[0][6]+"\t"+n[0][7]+"\n")
+
+                choose(n[0][-1])
                 n.pop(0)
 
-
-# In[29]:
